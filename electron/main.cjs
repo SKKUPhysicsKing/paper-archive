@@ -96,6 +96,12 @@ function registerIpcHandlers() {
     return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
   });
 
+  ipcMain.handle('viewer:set-fullscreen', (_event, active) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return false;
+    mainWindow.setFullScreen(Boolean(active));
+    return mainWindow.isFullScreen();
+  });
+
   ipcMain.handle('library:choose-explanation', async (_event, originalRelativePath) => {
     const originalAbsolutePath = library.resolveInsideRoot(originalRelativePath);
     const result = await dialog.showOpenDialog(mainWindow, {
@@ -119,7 +125,7 @@ function registerIpcHandlers() {
       return null;
     }
 
-    const portableOriginalPath = originalRelativePath.split(path.sep).join('/');
+    const portableOriginalPath = originalRelativePath.replace(/\\/g, '/');
     settings.pairOverridesByRoot[settings.libraryRoot] = {
       ...(settings.pairOverridesByRoot[settings.libraryRoot] ?? {}),
       [portableOriginalPath]: selectedRelativePath,

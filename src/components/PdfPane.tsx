@@ -18,15 +18,16 @@ export function PdfPane({ relativePath }: PdfPaneProps) {
   const [pageRatios, setPageRatios] = useState<Record<number, number>>({});
   const file = useMemo(() => (bytes ? { data: bytes } : undefined), [bytes]);
   const filename = relativePath.split('/').at(-1) ?? relativePath;
-  const pageWidth = Math.max(260, (paneWidth - 40) * zoom);
+  const pageWidth = Math.max(260, paneWidth * zoom);
 
   useEffect(() => {
     let active = true;
     setBytes(undefined);
     setNumPages(0);
     setPageRatios({});
+    setZoom(1);
     setError(undefined);
-    getPdfBytes(relativePath)
+    getPdfBytes(relativePath, { fresh: true })
       .then((value) => {
         if (active) setBytes(value);
       })
@@ -58,25 +59,12 @@ export function PdfPane({ relativePath }: PdfPaneProps) {
 
   return (
     <section className="pdf-pane">
-      <div className="pdf-pane__toolbar">
-        <span className="pdf-pane__filename" title={filename}>
-          {filename}
-        </span>
-        <div className="zoom-control" aria-label="확대/축소">
-          <button type="button" onClick={() => adjustZoom(-0.1)} aria-label="축소">
-            −
-          </button>
-          <span>{Math.round(zoom * 100)}%</span>
-          <button type="button" onClick={() => adjustZoom(0.1)} aria-label="확대">
-            +
-          </button>
-        </div>
-      </div>
       <div className="pdf-pane__scroll" ref={scrollRef}>
         {error ? <div className="pdf-message">{error}</div> : null}
         {!file && !error ? <div className="pdf-message">PDF를 여는 중입니다.</div> : null}
         {file ? (
           <Document
+            key={relativePath}
             file={file}
             onLoadSuccess={handleLoad}
             onLoadError={(reason) => setError(readableError(reason))}
@@ -99,6 +87,17 @@ export function PdfPane({ relativePath }: PdfPaneProps) {
             </div>
           </Document>
         ) : null}
+      </div>
+
+      <div className="pdf-pane__floating-toolbar">
+        <span className="glass-label pdf-pane__filename" title={filename}>
+          {filename}
+        </span>
+        <div className="glass-control zoom-control" aria-label="확대/축소">
+          <button type="button" onClick={() => adjustZoom(-0.1)} aria-label="축소">−</button>
+          <span>{Math.round(zoom * 100)}%</span>
+          <button type="button" onClick={() => adjustZoom(0.1)} aria-label="확대">+</button>
+        </div>
       </div>
     </section>
   );
@@ -127,11 +126,7 @@ function LazyPage({ pageNumber, width, ratio, onLoad }: LazyPageProps) {
   }, []);
 
   return (
-    <div
-      ref={hostRef}
-      className="pdf-page-shell"
-      style={{ width, minHeight: width * ratio }}
-    >
+    <div ref={hostRef} className="pdf-page-shell" style={{ width, minHeight: width * ratio }}>
       {visible ? (
         <Page
           pageNumber={pageNumber}

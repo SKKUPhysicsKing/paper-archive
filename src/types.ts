@@ -31,4 +31,5 @@ export interface PaperArchiveApi {
   listDirectory(relativePath: string): Promise<DirectoryListing>;
   readPdf(relativePath: string): Promise<Uint8Array>;
   chooseExplanation(originalRelativePath: string): Promise<string | null>;
+  setFullscreen(active: boolean): Promise<boolean>;
 }
