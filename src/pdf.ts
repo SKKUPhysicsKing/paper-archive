@@ -34,3 +34,7 @@ export function getPdfBytes(
 export function clearPdfCache() {
   pdfCache.clear();
 }
+
+export const pdfDocumentOptions = Object.freeze({
+  wasmUrl: new URL('./wasm/', window.location.href).toString(),
+});

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Document, Page } from 'react-pdf';
 import { useElementWidth } from '../hooks/useElementWidth';
-import { getPdfBytes } from '../pdf';
+import { getPdfBytes, pdfDocumentOptions } from '../pdf';
 
 interface PdfCoverProps {
   relativePath?: string;
@@ -59,6 +59,7 @@ export function PdfCover({ relativePath, blurred = false }: PdfCoverProps) {
         <Document
           key={relativePath}
           file={file}
+          options={pdfDocumentOptions}
           loading={null}
           error={null}
           onLoadError={() => setFailed(true)}
