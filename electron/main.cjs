@@ -76,9 +76,9 @@ function registerIpcHandlers() {
 
   ipcMain.handle('library:select', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: '논문 라이브러리 폴더 선택',
+      title: 'Choose paper library folder',
       properties: ['openDirectory'],
-      buttonLabel: '이 폴더 열기',
+      buttonLabel: 'Open folder',
     });
     if (result.canceled || !result.filePaths[0]) return null;
 
@@ -105,11 +105,11 @@ function registerIpcHandlers() {
   ipcMain.handle('library:choose-explanation', async (_event, originalRelativePath) => {
     const originalAbsolutePath = library.resolveInsideRoot(originalRelativePath);
     const result = await dialog.showOpenDialog(mainWindow, {
-      title: '해설 PDF 선택',
+      title: 'Choose commentary PDF',
       defaultPath: path.dirname(originalAbsolutePath),
       properties: ['openFile'],
       filters: [{ name: 'PDF', extensions: ['pdf'] }],
-      buttonLabel: '해설로 열기',
+      buttonLabel: 'Open as commentary',
     });
     if (result.canceled || !result.filePaths[0]) return null;
 
@@ -120,7 +120,7 @@ function registerIpcHandlers() {
       await dialog.showMessageBox(mainWindow, {
         type: 'info',
         title: 'Paper Archive',
-        message: '해설 PDF는 선택한 논문 라이브러리 폴더 안에 있어야 합니다.',
+        message: 'The commentary PDF must be inside the selected paper library.',
       });
       return null;
     }

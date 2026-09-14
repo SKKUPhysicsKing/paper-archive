@@ -39,10 +39,7 @@ export function LibraryView({
   return (
     <div className="library-shell">
       <header className="library-header">
-        <button className="wordmark" type="button" onClick={() => onNavigate('')}>
-          PAPER ARCHIVE
-        </button>
-        <nav className="breadcrumbs" aria-label="현재 폴더">
+        <nav className="breadcrumbs" aria-label="Current folder">
           {crumbs.map((crumb, index) => (
             <span className="breadcrumb" key={crumb.path || '__root__'}>
               {index > 0 && <span className="breadcrumb__separator">/</span>}
@@ -53,13 +50,13 @@ export function LibraryView({
           ))}
         </nav>
         <button className="quiet-action" type="button" onClick={onSelectLibrary}>
-          폴더 변경
+          Change folder
         </button>
       </header>
 
       <main className="library-content" aria-busy={loading}>
         {error ? <div className="status-message status-message--error">{error}</div> : null}
-        {loading ? <div className="status-message">폴더를 읽는 중입니다.</div> : null}
+        {loading ? <div className="status-message">Reading folder…</div> : null}
 
         {!loading && !error ? (
           <>
@@ -73,7 +70,7 @@ export function LibraryView({
             </div>
             {isEmpty ? (
               <div className="empty-state">
-                <p>이 폴더에는 하위 폴더나 PDF가 없습니다.</p>
+                <p>No subfolders or PDF files.</p>
               </div>
             ) : null}
           </>

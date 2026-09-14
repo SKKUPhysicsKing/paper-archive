@@ -159,13 +159,13 @@ async function collectPdfCandidates(directory, relativeBase = '', options = {}) 
 function createLibraryService({ getRoot, getPairOverrides }) {
   function resolveInsideRoot(relativePath = '') {
     const root = getRoot();
-    if (!root) throw new Error('먼저 논문 폴더를 선택해 주세요.');
+    if (!root) throw new Error('Choose a paper library folder first.');
 
     const absoluteRoot = path.resolve(root);
     const absolutePath = path.resolve(absoluteRoot, fromPortablePath(relativePath));
     const insideRoot =
       absolutePath === absoluteRoot || absolutePath.startsWith(`${absoluteRoot}${path.sep}`);
-    if (!insideRoot) throw new Error('선택한 논문 폴더 밖에는 접근할 수 없습니다.');
+    if (!insideRoot) throw new Error('Files outside the selected library cannot be accessed.');
     return absolutePath;
   }
 
@@ -239,7 +239,7 @@ function createLibraryService({ getRoot, getPairOverrides }) {
 
   async function readPdf(relativePath) {
     const absolutePath = resolveInsideRoot(relativePath);
-    if (!isPdf(absolutePath)) throw new Error('PDF 파일만 열 수 있습니다.');
+    if (!isPdf(absolutePath)) throw new Error('Only PDF files can be opened.');
     return fs.readFile(absolutePath);
   }
 
