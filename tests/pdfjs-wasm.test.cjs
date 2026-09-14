@@ -1,10 +1,8 @@
-import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import test from 'node:test';
-import { createRequire } from 'node:module';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const test = require('node:test');
 
-const require = createRequire(import.meta.url);
 const pdfjsRoot = path.dirname(require.resolve('pdfjs-dist/package.json'));
 const wasmDirectory = path.join(pdfjsRoot, 'wasm');
 
