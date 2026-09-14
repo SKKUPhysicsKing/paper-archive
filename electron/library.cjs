@@ -143,7 +143,7 @@ async function collectPdfCandidates(directory, relativeBase = '', options = {}) 
       if (entry.name.startsWith('.') || entry.isSymbolicLink()) continue;
       const relativePath = path.join(relativeDirectory, entry.name);
       if (entry.isFile() && isPdf(entry.name)) {
-        candidates.push({ relativePath: path.join(relativeBase, relativePath), depth });
+        candidates.push({ relativePath: joinPortablePath(relativeBase, relativePath), depth });
       }
       if (entry.isDirectory() && candidates.length < maxFiles) {
         await visit(path.join(absoluteDirectory, entry.name), relativePath, depth + 1);
@@ -162,7 +162,7 @@ function createLibraryService({ getRoot, getPairOverrides }) {
     if (!root) throw new Error('먼저 논문 폴더를 선택해 주세요.');
 
     const absoluteRoot = path.resolve(root);
-    const absolutePath = path.resolve(absoluteRoot, relativePath);
+    const absolutePath = path.resolve(absoluteRoot, fromPortablePath(relativePath));
     const insideRoot =
       absolutePath === absoluteRoot || absolutePath.startsWith(`${absoluteRoot}${path.sep}`);
     if (!insideRoot) throw new Error('선택한 논문 폴더 밖에는 접근할 수 없습니다.');
@@ -191,7 +191,7 @@ function createLibraryService({ getRoot, getPairOverrides }) {
     }
 
     const folders = await mapLimit(folderEntries, 6, async (entry) => {
-      const childRelativePath = path.join(relativePath, entry.name);
+      const childRelativePath = joinPortablePath(relativePath, entry.name);
       const candidates = await collectPdfCandidates(
         path.join(absoluteDirectory, entry.name),
         childRelativePath,
@@ -213,12 +213,12 @@ function createLibraryService({ getRoot, getPairOverrides }) {
 
     const visibleFileNames = fileNames.filter((name) => !directOverrideTargets.has(name));
     const papers = pairPdfNames(visibleFileNames, directoryOverrides).map((entry) => {
-      const originalPath = toPortablePath(path.join(relativePath, entry.originalName));
+      const originalPath = joinPortablePath(relativePath, entry.originalName);
       const overriddenExplanationPath = allOverrides[originalPath];
       const explanationPath = overriddenExplanationPath
         ? toPortablePath(overriddenExplanationPath)
         : entry.explanationName
-          ? toPortablePath(path.join(relativePath, entry.explanationName))
+          ? joinPortablePath(relativePath, entry.explanationName)
           : undefined;
       return {
         kind: 'paper',
@@ -269,8 +269,20 @@ async function mapLimit(values, limit, mapper) {
   return output;
 }
 
-function toPortablePath(value) {
-  return value.split(path.sep).join('/');
+function toPortablePath(value = '') {
+  return String(value)
+    .replace(/\\/g, '/')
+    .replace(/^\.\/+/, '')
+    .replace(/\/+/g, '/')
+    .replace(/\/$/, '');
+}
+
+function fromPortablePath(value = '') {
+  return toPortablePath(value).split('/').filter(Boolean).join(path.sep);
+}
+
+function joinPortablePath(...parts) {
+  return parts.map(toPortablePath).filter(Boolean).join('/');
 }
 
 function portableDirname(value) {

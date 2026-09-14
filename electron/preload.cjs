@@ -7,4 +7,5 @@ contextBridge.exposeInMainWorld('paperArchive', {
   readPdf: (relativePath) => ipcRenderer.invoke('library:read-pdf', relativePath),
   chooseExplanation: (originalRelativePath) =>
     ipcRenderer.invoke('library:choose-explanation', originalRelativePath),
+  setFullscreen: (active) => ipcRenderer.invoke('viewer:set-fullscreen', active),
 });

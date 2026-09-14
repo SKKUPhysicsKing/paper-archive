@@ -19,7 +19,6 @@ export function PdfCover({ relativePath, blurred = false }: PdfCoverProps) {
   useEffect(() => {
     const element = hostRef.current;
     if (!element) return;
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -34,9 +33,10 @@ export function PdfCover({ relativePath, blurred = false }: PdfCoverProps) {
   }, []);
 
   useEffect(() => {
+    setBytes(undefined);
+    setFailed(false);
     if (!visible || !relativePath) return;
     let active = true;
-    setFailed(false);
     getPdfBytes(relativePath)
       .then((value) => {
         if (active) setBytes(value);
@@ -52,11 +52,12 @@ export function PdfCover({ relativePath, blurred = false }: PdfCoverProps) {
   return (
     <div
       ref={hostRef}
-      className={`pdf-cover${blurred ? ' pdf-cover--blurred' : ''}`}
+      className={['pdf-cover', blurred ? 'pdf-cover--blurred' : ''].filter(Boolean).join(' ')}
       aria-hidden="true"
     >
       {file && !failed ? (
         <Document
+          key={relativePath}
           file={file}
           loading={null}
           error={null}

@@ -84,3 +84,39 @@ test('library service returns folders, representative covers, and paired papers'
     'Superconductivity/BCS_해설.pdf',
   );
 });
+
+test('library service reads PDFs placed directly in the selected root', async (context) => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'paper-archive-root-test-'));
+  context.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.writeFile(path.join(root, 'root-paper.pdf'), '%PDF-1.4 root');
+  await fs.writeFile(path.join(root, 'root-paper_해설.pdf'), '%PDF-1.4 notes');
+
+  const service = createLibraryService({
+    getRoot: () => root,
+    getPairOverrides: () => ({}),
+  });
+
+  const listing = await service.listDirectory('');
+  assert.equal(listing.relativePath, '');
+  assert.equal(listing.papers.length, 1);
+  assert.equal(listing.papers[0].originalPath, 'root-paper.pdf');
+  assert.equal(listing.papers[0].explanationPath, 'root-paper_해설.pdf');
+
+  const bytes = await service.readPdf(listing.papers[0].originalPath);
+  assert.equal(bytes.toString(), '%PDF-1.4 root');
+});
+
+test('portable nested paths resolve on the host platform', async (context) => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'paper-archive-path-test-'));
+  context.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.mkdir(path.join(root, 'topic', 'nested'), { recursive: true });
+  await fs.writeFile(path.join(root, 'topic', 'nested', 'paper.pdf'), '%PDF-1.4');
+
+  const service = createLibraryService({
+    getRoot: () => root,
+    getPairOverrides: () => ({}),
+  });
+
+  const bytes = await service.readPdf('topic/nested/paper.pdf');
+  assert.equal(bytes.toString(), '%PDF-1.4');
+});
