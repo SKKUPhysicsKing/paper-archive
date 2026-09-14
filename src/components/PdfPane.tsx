@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import { Document, Page } from 'react-pdf';
 import { useElementWidth } from '../hooks/useElementWidth';
-import { getPdfBytes } from '../pdf';
+import { getPdfBytes, pdfDocumentOptions } from '../pdf';
 
 interface PdfPaneProps {
   relativePath: string;
@@ -66,6 +66,7 @@ export function PdfPane({ relativePath }: PdfPaneProps) {
           <Document
             key={relativePath}
             file={file}
+            options={pdfDocumentOptions}
             onLoadSuccess={handleLoad}
             onLoadError={(reason) => setError(readableError(reason))}
             loading={<div className="pdf-message">PDF를 여는 중입니다.</div>}
