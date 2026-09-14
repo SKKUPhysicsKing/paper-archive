@@ -61,7 +61,7 @@ export function PdfPane({ relativePath }: PdfPaneProps) {
     <section className="pdf-pane">
       <div className="pdf-pane__scroll" ref={scrollRef}>
         {error ? <div className="pdf-message">{error}</div> : null}
-        {!file && !error ? <div className="pdf-message">PDF를 여는 중입니다.</div> : null}
+        {!file && !error ? <div className="pdf-message">Opening PDF…</div> : null}
         {file ? (
           <Document
             key={relativePath}
@@ -69,8 +69,8 @@ export function PdfPane({ relativePath }: PdfPaneProps) {
             options={pdfDocumentOptions}
             onLoadSuccess={handleLoad}
             onLoadError={(reason) => setError(readableError(reason))}
-            loading={<div className="pdf-message">PDF를 여는 중입니다.</div>}
-            error={<div className="pdf-message">PDF를 표시할 수 없습니다.</div>}
+            loading={<div className="pdf-message">Opening PDF…</div>}
+            error={<div className="pdf-message">Unable to display this PDF.</div>}
           >
             <div className="pdf-pages">
               {Array.from({ length: numPages }, (_, index) => {
@@ -94,10 +94,10 @@ export function PdfPane({ relativePath }: PdfPaneProps) {
         <span className="glass-label pdf-pane__filename" title={filename}>
           {filename}
         </span>
-        <div className="glass-control zoom-control" aria-label="확대/축소">
-          <button type="button" onClick={() => adjustZoom(-0.1)} aria-label="축소">−</button>
+        <div className="glass-control zoom-control" aria-label="Zoom">
+          <button type="button" onClick={() => adjustZoom(-0.1)} aria-label="Zoom out">−</button>
           <span>{Math.round(zoom * 100)}%</span>
-          <button type="button" onClick={() => adjustZoom(0.1)} aria-label="확대">+</button>
+          <button type="button" onClick={() => adjustZoom(0.1)} aria-label="Zoom in">+</button>
         </div>
       </div>
     </section>
@@ -143,5 +143,5 @@ function LazyPage({ pageNumber, width, ratio, onLoad }: LazyPageProps) {
 }
 
 function readableError(error: unknown) {
-  return error instanceof Error ? error.message : 'PDF를 표시할 수 없습니다.';
+  return error instanceof Error ? error.message : 'Unable to display this PDF.';
 }

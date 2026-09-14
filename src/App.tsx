@@ -66,7 +66,7 @@ export default function App() {
   };
 
   if (library === undefined) {
-    return <div className="launch-state">Paper Archive</div>;
+    return <div className="launch-state">Loading library</div>;
   }
 
   if (!library) {
@@ -109,11 +109,10 @@ function Welcome({
   return (
     <main className="welcome">
       <div className="welcome__content">
-        <div className="welcome__wordmark">PAPER ARCHIVE</div>
-        <h1>논문 폴더를 그대로 읽는 로컬 아카이브</h1>
-        <p>파일을 업로드하거나 복사하지 않습니다.</p>
+        <h1>Open a local paper library</h1>
+        <p>Your files remain in their original folders.</p>
         <button type="button" onClick={onSelectLibrary}>
-          논문 폴더 열기
+          Choose folder
         </button>
         {error ? <div className="welcome__error">{error}</div> : null}
       </div>
@@ -122,5 +121,5 @@ function Welcome({
 }
 
 function readableError(error: unknown) {
-  return error instanceof Error ? error.message : '폴더를 읽을 수 없습니다.';
+  return error instanceof Error ? error.message : 'Unable to read this folder.';
 }
