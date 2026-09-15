@@ -63,3 +63,26 @@ npm run check
 ```
 
 폴더/파일명 매칭 테스트와 프로덕션 빌드를 함께 실행합니다.
+
+
+## Windows 설치 및 자동 업데이트
+
+일반 사용자는 GitHub Releases에서 `Paper-Archive-Setup-<version>.exe`를 내려받아 한 번 설치합니다. 설치 후에는 Node.js나 npm 명령이 필요하지 않습니다.
+
+설치형 Windows 앱은 시작 5초 후 새 GitHub Release를 확인하고, 이후 6시간마다 다시 확인합니다. 새 버전이 있으면 다운로드 여부를 묻고, 다운로드가 완료되면 `Restart and update`를 선택하여 설치합니다. 논문 파일과 사용자 설정은 업데이트 과정에서 변경되지 않습니다.
+
+자동 업데이트는 NSIS 설치본에서만 지원합니다. Portable 실행 파일은 수동으로 교체해야 합니다.
+
+### 새 버전 배포
+
+1. `package.json`의 버전을 증가시킵니다.
+2. 변경 내용을 `main`에 병합합니다.
+3. 같은 버전의 태그를 푸시합니다. 예: 패키지 버전이 `0.2.1`이면 `v0.2.1`.
+4. GitHub Actions가 테스트와 빌드를 실행하고 설치 파일, `latest.yml`, blockmap을 GitHub Release에 게시합니다.
+
+```bash
+npm version patch
+git push origin main --follow-tags
+```
+
+Windows 코드 서명이 설정되지 않은 개인 빌드에서는 SmartScreen 경고가 나타날 수 있습니다.
