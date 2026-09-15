@@ -1,7 +1,9 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { createLibraryService } = require('./library.cjs');
+const { setupAutoUpdater } = require('./updater.cjs');
 
 let mainWindow;
 let settings = { libraryRoot: null, pairOverridesByRoot: {} };
@@ -186,6 +188,12 @@ app.whenReady().then(async () => {
   await loadSettings();
   registerIpcHandlers();
   createWindow();
+  setupAutoUpdater({
+    app,
+    autoUpdater,
+    dialog,
+    getWindow: () => mainWindow,
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
