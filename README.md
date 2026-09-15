@@ -86,4 +86,14 @@ npm version patch --no-git-tag-version
 
 수동 재실행이 필요하면 GitHub의 Actions 페이지에서 **Release Windows app → Run workflow**를 사용할 수 있습니다.
 
-Windows 코드 서명이 설정되지 않은 개인 빌드에서는 SmartScreen 경고가 나타날 수 있습니다.
+### 보안 및 설치 파일 검증
+
+배포 전에 전체 npm 의존성 감사, 테스트, 프로덕션 빌드와 CodeQL 검사를 수행합니다. 각 Release에는 설치 파일과 함께 `SHA256SUMS.txt`, CycloneDX 형식의 `sbom.cdx.json`, GitHub 빌드 출처 증명이 게시됩니다.
+
+Windows에서 다운로드한 설치 파일의 해시를 확인하려면 PowerShell에서 다음을 실행하고, 결과를 해당 Release의 `SHA256SUMS.txt`와 비교합니다.
+
+```powershell
+Get-FileHash .\Paper-Archive-Setup-0.2.3.exe -Algorithm SHA256
+```
+
+코드 서명이 없는 빌드에서는 검사 결과가 깨끗해도 SmartScreen의 `알 수 없는 게시자` 경고가 나타날 수 있습니다. 이 경고를 정식으로 제거하려면 신뢰된 Windows Authenticode 코드 서명 인증서가 필요합니다. 인증서를 준비한 뒤 GitHub Actions 저장소 비밀에 `WINDOWS_CSC_LINK`(Base64 또는 인증서 링크)와 `WINDOWS_CSC_KEY_PASSWORD`를 설정하면 이후 Release 빌드가 자동으로 서명됩니다. 인증서와 암호를 저장소 파일이나 로그에 넣으면 안 됩니다.
