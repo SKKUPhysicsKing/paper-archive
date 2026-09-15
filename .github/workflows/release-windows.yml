@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - package.json
+      - .github/workflows/release-windows.yml
   workflow_dispatch:
 
 permissions:
@@ -46,7 +47,29 @@ jobs:
             git push origin "refs/tags/$tag"
           }
 
-      - name: Test, build, and publish
+      - name: Test and build Windows installer
         run: npm run release:win
+
+      - name: Publish release assets
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $packageVersion = (Get-Content package.json | ConvertFrom-Json).version
+          $tag = "v$packageVersion"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --target $env:GITHUB_SHA --title $packageVersion --generate-notes
+          }
+
+          $assets = Get-ChildItem release -File | Where-Object {
+            $_.Name -eq "latest.yml" -or
+            $_.Name -like "Paper-Archive-Setup-*.exe" -or
+            $_.Name -like "Paper-Archive-Setup-*.exe.blockmap"
+          }
+
+          if ($assets.Count -ne 3) {
+            throw "Expected installer, latest.yml, and blockmap; found $($assets.Count) release assets."
+          }
+
+          gh release upload $tag @($assets.FullName) --clobber
