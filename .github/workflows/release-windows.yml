@@ -2,8 +2,11 @@ name: Release Windows app
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+    paths:
+      - package.json
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -26,15 +29,6 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-
-      - name: Verify tag matches package version
-        shell: pwsh
-        run: |
-          $packageVersion = (Get-Content package.json | ConvertFrom-Json).version
-          $expectedTag = "v$packageVersion"
-          if ("${{ github.ref_name }}" -ne $expectedTag) {
-            throw "Tag ${{ github.ref_name }} does not match package version $packageVersion"
-          }
 
       - name: Install dependencies
         run: npm ci
