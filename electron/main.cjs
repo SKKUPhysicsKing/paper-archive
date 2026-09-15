@@ -2,11 +2,51 @@ const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 const { createLibraryService } = require('./library.cjs');
 const { setupAutoUpdater } = require('./updater.cjs');
 
 let mainWindow;
 let settings = { libraryRoot: null, pairOverridesByRoot: {} };
+
+function rendererEntryUrl() {
+  return process.env.PAPER_ARCHIVE_DEV_SERVER_URL ??
+    pathToFileURL(path.join(__dirname, '..', 'dist', 'index.html')).href;
+}
+
+function isTrustedRendererUrl(targetUrl) {
+  try {
+    const target = new URL(targetUrl);
+    const allowed = new URL(rendererEntryUrl());
+    if (allowed.protocol === 'file:') {
+      return target.protocol === 'file:' && target.pathname === allowed.pathname;
+    }
+    return target.origin === allowed.origin;
+  } catch {
+    return false;
+  }
+}
+
+function registerTrustedHandler(channel, handler) {
+  ipcMain.handle(channel, (event, ...args) => {
+    const trustedWindow = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+    const trustedSender =
+      trustedWindow &&
+      event.sender === trustedWindow.webContents &&
+      event.senderFrame === trustedWindow.webContents.mainFrame &&
+      isTrustedRendererUrl(event.senderFrame.url);
+
+    if (!trustedSender) throw new Error('Untrusted renderer request was blocked.');
+    return handler(...args);
+  });
+}
+
+function validateRelativePath(value, { allowEmpty = false } = {}) {
+  if (typeof value !== 'string' || value.length > 32_768 || (!allowEmpty && !value)) {
+    throw new TypeError('Invalid library path.');
+  }
+  return value;
+}
 
 function settingsPath() {
   return path.join(app.getPath('userData'), 'settings.json');
@@ -66,7 +106,7 @@ function registerIpcHandlers() {
       settings.libraryRoot ? settings.pairOverridesByRoot[settings.libraryRoot] ?? {} : {},
   });
 
-  ipcMain.handle('library:get', async () => {
+  registerTrustedHandler('library:get', async () => {
     if (!settings.libraryRoot) return null;
     try {
       const stat = await fs.stat(settings.libraryRoot);
@@ -76,7 +116,7 @@ function registerIpcHandlers() {
     }
   });
 
-  ipcMain.handle('library:select', async () => {
+  registerTrustedHandler('library:select', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Choose paper library folder',
       properties: ['openDirectory'],
@@ -89,22 +129,24 @@ function registerIpcHandlers() {
     return libraryInfo();
   });
 
-  ipcMain.handle('library:list', (_event, relativePath = '') =>
-    library.listDirectory(relativePath),
+  registerTrustedHandler('library:list', (relativePath = '') =>
+    library.listDirectory(validateRelativePath(relativePath, { allowEmpty: true })),
   );
 
-  ipcMain.handle('library:read-pdf', async (_event, relativePath) => {
-    const buffer = await library.readPdf(relativePath);
+  registerTrustedHandler('library:read-pdf', async (relativePath) => {
+    const buffer = await library.readPdf(validateRelativePath(relativePath));
     return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
   });
 
-  ipcMain.handle('viewer:set-fullscreen', (_event, active) => {
+  registerTrustedHandler('viewer:set-fullscreen', (active) => {
+    if (typeof active !== 'boolean') throw new TypeError('Invalid fullscreen value.');
     if (!mainWindow || mainWindow.isDestroyed()) return false;
     mainWindow.setFullScreen(Boolean(active));
     return mainWindow.isFullScreen();
   });
 
-  ipcMain.handle('library:choose-explanation', async (_event, originalRelativePath) => {
+  registerTrustedHandler('library:choose-explanation', async (originalRelativePath) => {
+    validateRelativePath(originalRelativePath);
     const originalAbsolutePath = library.resolveInsideRoot(originalRelativePath);
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Choose commentary PDF',
@@ -152,6 +194,8 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
     },
   });
 
@@ -167,9 +211,15 @@ function createWindow() {
   }
 
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  mainWindow.webContents.on('will-attach-webview', (event) => event.preventDefault());
   mainWindow.webContents.on('will-navigate', (event, targetUrl) => {
-    const allowedUrl = devServerUrl ?? `file://${path.join(__dirname, '..', 'dist', 'index.html')}`;
-    if (!targetUrl.startsWith(allowedUrl)) event.preventDefault();
+    if (!isTrustedRendererUrl(targetUrl)) event.preventDefault();
+  });
+
+  const rendererSession = mainWindow.webContents.session;
+  rendererSession.setPermissionCheckHandler(() => false);
+  rendererSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
+    callback(false);
   });
 
   const capturePath = process.env.PAPER_ARCHIVE_CAPTURE_PATH;

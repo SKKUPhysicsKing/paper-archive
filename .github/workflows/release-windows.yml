@@ -11,6 +11,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -23,12 +25,12 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
           cache: npm
@@ -48,7 +50,27 @@ jobs:
           }
 
       - name: Test and build Windows installer
+        env:
+          CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
         run: npm run release:win
+
+      - name: Create checksums and software bill of materials
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem release -File -Filter "Paper-Archive-Setup-*.exe" | Select-Object -First 1
+          if (-not $installer) {
+            throw "Windows installer was not created."
+          }
+
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($installer.Name)" | Set-Content release/SHA256SUMS.txt -Encoding ascii
+          npm sbom --omit=dev --sbom-format cyclonedx | Out-File release/sbom.cdx.json -Encoding utf8
+
+      - name: Attest installer provenance
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: release/Paper-Archive-Setup-*.exe
 
       - name: Publish release assets
         shell: pwsh
@@ -64,12 +86,14 @@ jobs:
 
           $assets = Get-ChildItem release -File | Where-Object {
             $_.Name -eq "latest.yml" -or
+            $_.Name -eq "SHA256SUMS.txt" -or
+            $_.Name -eq "sbom.cdx.json" -or
             $_.Name -like "Paper-Archive-Setup-*.exe" -or
             $_.Name -like "Paper-Archive-Setup-*.exe.blockmap"
           }
 
-          if ($assets.Count -ne 3) {
-            throw "Expected installer, latest.yml, and blockmap; found $($assets.Count) release assets."
+          if ($assets.Count -ne 5) {
+            throw "Expected installer, update metadata, checksum, and SBOM; found $($assets.Count) release assets."
           }
 
           gh release upload $tag @($assets.FullName) --clobber
