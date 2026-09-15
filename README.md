@@ -75,14 +75,15 @@ npm run check
 
 ### 새 버전 배포
 
-1. `package.json`의 버전을 증가시킵니다.
-2. 변경 내용을 `main`에 병합합니다.
-3. 같은 버전의 태그를 푸시합니다. 예: 패키지 버전이 `0.2.1`이면 `v0.2.1`.
-4. GitHub Actions가 테스트와 빌드를 실행하고 설치 파일, `latest.yml`, blockmap을 GitHub Release에 게시합니다.
+1. 새 기능을 `main`에 병합할 준비를 합니다.
+2. 아래 명령처럼 `package.json`과 `package-lock.json`의 버전을 함께 증가시킵니다.
+3. 버전 변경을 포함한 PR을 `main`에 병합합니다.
+4. GitHub Actions가 자동으로 테스트하고, `v<version>` Release와 Windows 설치 파일, `latest.yml`, blockmap을 게시합니다.
 
 ```bash
-npm version patch
-git push origin main --follow-tags
+npm version patch --no-git-tag-version
 ```
+
+수동 재실행이 필요하면 GitHub의 Actions 페이지에서 **Release Windows app → Run workflow**를 사용할 수 있습니다.
 
 Windows 코드 서명이 설정되지 않은 개인 빌드에서는 SmartScreen 경고가 나타날 수 있습니다.
