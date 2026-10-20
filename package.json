@@ -19,21 +19,21 @@
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-pdf": "^11.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "concurrently": "^9.2.1",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^10.0.6",
     "cross-env": "^10.1.0",
-    "electron": "^44.3.0",
+    "electron": "^44.9.0",
     "electron-builder": "^26.15.3",
     "typescript": "^7.0.2",
-    "vite": "^8.3.0",
-    "wait-on": "^9.0.3"
+    "vite": "^8.3.4",
+    "wait-on": "^9.5.1"
   },
   "build": {
     "appId": "kr.ac.skku.paperarchive",
